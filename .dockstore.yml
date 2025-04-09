@@ -1,0 +1,12 @@
+ version: 1.2
+  workflows:
+  name: helloWorldExample
+    subclass: WDL
+    primaryDescriptorPath:/helloWorld.wdl
+#    testParameterFiles:
+#      - /assoc-aggregate/assoc-aggregate-terra-allele.json
+#  name: example_2
+#    subclass: WDL
+#    primaryDescriptorPath: /assoc-aggregate/assoc-aggregate.wdl
+#    testParameterFiles:
+#      - /assoc-aggregate/assoc-aggregate-terra-position.json
