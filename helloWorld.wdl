@@ -1,15 +1,23 @@
 version 1.0
 
-workflow HelloWorld {
-  call WriteGreeting
+task hello {
+  input {
+    String name
+  }
+
+  command {
+    echo 'hello ${name}!'
+  }
+
+  output {
+    File response = stdout()
+  }
+
+  runtime {
+   docker: 'ubuntu:impish-20220105'
+  }
 }
 
-task WriteGreeting {
-  command {
-     echo "Hello World"
-  }
-  output {
-     # Write output to standard out
-     File output_greeting = stdout()
-  }
+workflow test {
+  call hello
 }
