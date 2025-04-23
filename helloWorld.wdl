@@ -15,6 +15,7 @@ task hello {
 
   runtime {
    docker: 'ubuntu:impish-20220105'
+   preemptible: 3
   }
 }
 
