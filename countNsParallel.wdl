@@ -35,10 +35,10 @@ task split_fasta {
         mkdir split_seqs
 
         # Decompress if needed and split into separate files per sequence
-        if [[ "${assembly_fasta}" == *.gz ]]; then
-            zcat ${assembly_fasta} | awk '/^>/ {f="split_seqs/seq"++i".fa"} {print > f}'
+        if [[ "~{assembly_fasta}" == *.gz ]]; then
+            zcat ~{assembly_fasta} | awk '/^>/ {f="split_seqs/seq"++i".fa"} {print > f}'
         else
-            cat ${assembly_fasta} | awk '/^>/ {f="split_seqs/seq"++i".fa"} {print > f}'
+            cat ~{assembly_fasta} | awk '/^>/ {f="split_seqs/seq"++i".fa"} {print > f}'
         fi
 
         ls split_seqs/*.fa > sequences.txt
@@ -53,6 +53,7 @@ task split_fasta {
         preemptible: 3
     }
 }
+
 
 task count_ns {
     input {
