@@ -29,16 +29,16 @@ task split_fasta {
         File assembly_fasta
     }
 
-    command <<< 
+    command <<<
         set -eux
 
         mkdir split_seqs
 
         # Decompress if needed and split into separate files per sequence
-        if [[ "~{assembly_fasta}" == *.gz ]]; then
-            zcat ~{assembly_fasta} | awk '/^>/ {f="split_seqs/seq"++i".fa"} {print > f}'
+        if [[ "${assembly_fasta}" == *.gz ]]; then
+            zcat ${assembly_fasta} | awk '/^>/ {f="split_seqs/seq"++i".fa"} {print > f}'
         else
-            cat ~{assembly_fasta} | awk '/^>/ {f="split_seqs/seq"++i".fa"} {print > f}'
+            cat ${assembly_fasta} | awk '/^>/ {f="split_seqs/seq"++i".fa"} {print > f}'
         fi
 
         ls split_seqs/*.fa > sequences.txt
@@ -49,28 +49,26 @@ task split_fasta {
     }
 
     runtime {
-        docker: "debian:bullseye"
+		docker: "debian:bullseye"
         preemptible: 3
     }
 }
-
 
 task count_ns {
     input {
         File seq_file
     }
 
-    command <<< 
-        set -euo pipefail
-        grep -v "^>" ${seq_file} | tr -d -c 'Nn' | wc -c > gaps.txt
-    >>>
+    command {
+        zgrep -v "^>" ${seq_file} | tr -d -c 'Nn' | wc -c > gaps.txt
+    }
 
     output {
         Int total_ns = read_int("gaps.txt")
     }
 
     runtime {
-        docker: "debian:bullseye"
+		docker: "debian:bullseye"
         preemptible: 3
     }
 }
@@ -80,17 +78,16 @@ task sum_counts {
         Array[Int] count_ns_values
     }
 
-    command <<< 
-        set -euo pipefail
+    command {
         echo ${sep="+" count_ns_values} | bc > total_gaps.txt
-    >>>
+    }
 
     output {
         Int total_ns = read_int("total_gaps.txt")
     }
 
     runtime {
-        docker: "debian:bullseye"
+		docker: "debian:bullseye"
         preemptible: 3
     }
 }
