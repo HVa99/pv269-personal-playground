@@ -21,7 +21,7 @@ task CountGaps {
   }
 
   command {
-    grep -o 'N' ~{fasta} | wc -l > gap_count.txt
+    gzip -cd ${assembly_fasta} | grep -v "^>" | tr -d -c 'Nn' | wc -c > gap_count.txt
   }
 
   output {
