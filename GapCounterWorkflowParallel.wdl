@@ -61,7 +61,7 @@ task sum_gaps {
       gzip -cd "~{assembly}"
     else
       cat "~{assembly}"
-    fi | grep -o 'N' | wc -l
+    fi | grep -v "^>" | tr -d -c 'Nn' | wc -c
   >>>
 
   runtime {
@@ -74,21 +74,3 @@ task sum_gaps {
   }
 }
 
-task sum {
-  input {
-    Array[Int]+ ints
-  }
-
-  command <<< 
-    printf '~{sep=" " ints}' | awk '{tot=0; for(i=1;i<=NF;i++) tot+=$i; print tot}'
-  >>>
-
-  runtime {
-    docker: "ubuntu:20.04"
-    preemptible: 3
-  }
-
-  output {
-    Int total = read_int(stdout())
-  }
-}
