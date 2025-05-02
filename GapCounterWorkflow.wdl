@@ -21,11 +21,11 @@ task CountGaps {
   }
 
   command {
-    gzip -cd ${assembly_fasta} | grep -v "^>" | tr -d -c 'Nn' | wc -c > gap_count.txt
+    gzip -cd ~{fasta} | grep -v "^>" | tr -d -c 'Nn' | wc -c > gaps.txt
   }
 
   output {
-    Int total_gaps = read_int("gap_count.txt")
+    Int total_gaps = read_int("gaps.txt")
   }
 
   runtime {
