@@ -17,8 +17,13 @@ workflow GapCounterWorkflowParallel {
     }
   }
 
+  call SumInts {
+    input:
+      numbers = CountContigGaps.total_gaps
+  }
+
   output {
-    Int total_gap_length = sum(CountContigGaps.total_gaps)
+    Int total_gap_length = SumInts.total
   }
 }
 
@@ -61,6 +66,27 @@ task CountContigGaps {
   runtime {
     docker: "ubuntu:20.04"
     preemptible: 2
+    memory: "1 GB"
+    cpu: 1
+  }
+}
+
+task SumInts {
+  input {
+    Array[Int] numbers
+  }
+
+  command <<<
+    echo "~{sep=' ' numbers[@]}" | awk '{s=0; for (i=1;i<=NF;i++) s+=$i; print s}' > sum.txt
+  >>>
+
+  output {
+    Int total = read_int("sum.txt")
+  }
+
+  runtime {
+    docker: "ubuntu:20.04"
+    preemptible: 3
     memory: "1 GB"
     cpu: 1
   }
