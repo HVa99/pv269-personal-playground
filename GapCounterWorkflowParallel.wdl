@@ -1,6 +1,6 @@
 version 1.0
 
-workflow ParallelGapCounterWorkflow {
+workflow GapCounterWorkflowParallel {
   input {
     File assembly_fasta
   }
@@ -60,7 +60,7 @@ task CountContigGaps {
 
   runtime {
     docker: "ubuntu:20.04"
-    preemptible: 3
+    preemptible: 2
     memory: "1 GB"
     cpu: 1
   }
