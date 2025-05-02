@@ -2,92 +2,94 @@ version 1.0
 
 workflow GapCounterWorkflowParallel {
   input {
-    File assembly_fasta
+    File assembly
   }
 
-  call SplitFasta {
+  call split_fasta_files {
     input:
-      fasta = assembly_fasta
+      assembly = assembly
   }
 
-  scatter (contig in SplitFasta.contigs) {
-    call CountContigGaps {
+  scatter (assembly_file in split_fasta_files.assembly_files) {
+    call sum_gaps {
       input:
-        contig_fasta = contig
+        assembly = assembly_file
     }
   }
 
-  call SumInts {
+  call sum {
     input:
-      numbers = CountContigGaps.total_gaps
+      ints = sum_gaps.num_gaps
   }
 
-  output {
-    Int total_gap_length = SumInts.total
-  }
-}
 
-task SplitFasta {
+task split_fasta_files {
   input {
-    File fasta
+    File assembly
   }
 
-  command <<<
-    mkdir contigs
-    gzip -cd ~{fasta} | awk '/^>/{close(out); out="contigs/"++i".fa"; print > out; next} {print > out}'
-    ls contigs/*.fa > contigs.list
+  command <<< 
+    seqkit split --by-part 100 --out-dir assembly_parts --threads 4 "~{assembly}"
   >>>
 
-  output {
-    Array[File] contigs = read_lines("contigs.list")
-  }
-
   runtime {
-    docker: "ubuntu:20.04"
-    preemptible: 2
-    memory: "2 GB"
-    cpu: 1
-  }
-}
-
-task CountContigGaps {
-  input {
-    File contig_fasta
-  }
-
-  command {
-    grep -v "^>" ~{contig_fasta} | tr -d -c 'Nn' | wc -c > gaps.txt
+    docker: "staphb/seqkit:latest"
+    max_retries: 3
+    disks: "local-disk 20 SSD"
+    cpu: 6
+    memory: "8 GB"
+    preemptible: 3
   }
 
   output {
-    Int total_gaps = read_int("gaps.txt")
-  }
-
-  runtime {
-    docker: "ubuntu:20.04"
-    preemptible: 2
-    memory: "1 GB"
-    cpu: 1
+    Array[File] assembly_files = glob("assembly_parts/*")
+    Int num_parts = length(assembly_files)
   }
 }
 
-task SumInts {
+task sum_gaps {
   input {
-    Array[Int] numbers
+    File assembly
   }
 
-  command <<<
-    echo "~{sep=' ' numbers[@]}" | awk '{s=0; for (i=1;i<=NF;i++) s+=$i; print s}' > sum.txt
+  command <<< 
+    if [[ "~{assembly}" == *.gz ]]; then
+      gzip -cd "~{assembly}"
+    else
+      cat "~{assembly}"
+    fi | grep -o 'N' | wc -l
   >>>
 
-  output {
-    Int total = read_int("sum.txt")
+  runtime {
+    docker: "quay.io/biocontainers/gzip:1.11"
+    preemptible: 1
   }
+
+  output {
+    Int num_gaps = read_int(stdout())
+  }
+}
+
+task sum {
+  input {
+    Array[Int]+ ints
+  }
+
+  command <<< 
+    printf '~{sep=" " ints}' | awk '{tot=0; for(i=1;i<=NF;i++) tot+=$i; print tot}'
+  >>>
 
   runtime {
     docker: "ubuntu:20.04"
     preemptible: 3
-    memory: "1 GB"
-    cpu: 1
+  }
+
+  output {
+    Int total = read_int(stdout())
+  }
+}
+
+  output {
+    Int num_gaps_fast = sum.total
   }
 }
