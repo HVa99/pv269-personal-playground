@@ -36,6 +36,11 @@ task split_fasta_files {
     seqkit split --by-part 100 --out-dir assembly_parts --threads 4 "~{assembly}"
   >>>
 
+  output {
+    Array[File] assembly_files = glob("assembly_parts/*")
+    Int num_parts = length(assembly_files)
+  }
+
   runtime {
     docker: "staphb/seqkit:latest"
     max_retries: 3
@@ -43,11 +48,6 @@ task split_fasta_files {
     cpu: 6
     memory: "8 GB"
     preemptible: 3
-  }
-
-  output {
-    Array[File] assembly_files = glob("assembly_parts/*")
-    Int num_parts = length(assembly_files)
   }
 }
 
@@ -64,13 +64,31 @@ task sum_gaps {
     fi | grep -v "^>" | tr -d -c 'Nn' | wc -c
   >>>
 
+  output {
+    Int num_gaps = read_int(stdout())
+  }
+
   runtime {
     docker: "quay.io/biocontainers/gzip:1.11"
     preemptible: 1
   }
-
-  output {
-    Int num_gaps = read_int(stdout())
-  }
 }
 
+task sum {
+  input {
+    Array[Int]+ ints
+  }
+
+  command <<< 
+    printf '~{sep=" " ints}' | awk '{tot=0; for(i=1;i<=NF;i++) tot+=$i; print tot}'
+  >>>
+
+  output {
+    Int total = read_int(stdout())
+  }
+
+  runtime {
+    docker: "ubuntu:20.04"
+    preemptible: 3
+  }
+}
