@@ -22,6 +22,10 @@ workflow GapCounterWorkflowParallel {
       ints = sum_gaps.num_gaps
   }
 
+  output {
+    Int num_gaps_fast = sum.total
+  }
+}
 
 task split_fasta_files {
   input {
@@ -86,10 +90,5 @@ task sum {
 
   output {
     Int total = read_int(stdout())
-  }
-}
-
-  output {
-    Int num_gaps_fast = sum.total
   }
 }
